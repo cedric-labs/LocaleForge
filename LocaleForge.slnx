@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LocaleForge/LocaleForge.csproj" />
+  <Project Path="LocaleForge.Tests/LocaleForge.Tests.csproj" />
+</Solution>
