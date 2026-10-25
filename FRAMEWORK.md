@@ -1,50 +1,54 @@
-# LocaleForge — Spécification & Documentation IA du Framework
+<p align="right">
+  <b>English</b> | <a href="FRAMEWORK.fr.md">Français</a>
+</p>
 
-Ce document est le manifeste technique destiné à l'agent IA et aux développeurs. Il récapitule l'ensemble des capacités, composants et contrats publics exposés par **LocaleForge**.
+# LocaleForge — Framework Specification & AI Documentation
 
----
-
-## 🎯 Périmètre & Responsabilité
-
-LocaleForge est la bibliothèque partagée .NET dédiée à la **localisation JSON (`IStringLocalizer`), à la découverte dynamique des langues et au formatage monétaire multi-devises ISO-4217**. Elle est 100% agnostique du domaine métier et des bases de données.
+This document is the technical manifest intended for AI agents and software engineers. It outlines all capabilities, architectural components, and public contracts exposed by **LocaleForge**.
 
 ---
 
-## 🧱 Composants & Capacités Détaillées
+## 🎯 Scope & Responsibility
 
-### 1. `LocaleForge.Localization` — Localisation JSON & Découverte de Langues
-- **`JsonStringLocalizer` (`IStringLocalizer`) & `JsonStringLocalizerFactory` (`IStringLocalizerFactory`)** :
-  - Chargement paresseux et mise en cache thread-safe (`ConcurrentDictionary<string, Lazy<Dictionary<string, string>>>`) des fichiers JSON de traduction (`{culture}.json`).
-  - Aplatissement récursif des hiérarchies JSON imbriquées (ex: `{"Common": {"Save": "Enregistrer"}}` $\rightarrow$ `Common.Save`).
-  - Chaîne de repli hiérarchique automatique : culture active $\rightarrow$ `fr` $\rightarrow$ `en` $\rightarrow$ clé brute.
-  - Prise en charge des types scalaires JSON (chaînes, nombres, booléens) et tolérance aux fichiers JSON absents ou malformés.
-- **`LanguageInfo` (`record`)** :
-  - `string Code` : Code ISO de la langue (`fr`, `en`, `es`, `de`, etc.).
-  - `string DisplayName` : Libellé natif capitalisé précédé de l'emoji du drapeau (`🇫🇷 Français`).
-  - `string FlagEmoji` : Emoji du drapeau associé.
-- **`ILanguageService` & `LanguageService`** :
-  - `GetSupportedLanguages()` : Découvre dynamiquement les fichiers `*.json` dans le dossier de ressources, résout les noms natifs via `CultureInfo` (avec repli gracieux sur `CultureNotFoundException`) et trie par priorité (`fr`, `en`, puis ordre alphabétique).
-  - `IsSupported(string? code)` : Vérifie de manière insensible à la casse si une langue est disponible.
-  - `GetFlagForLanguage(string code)` : Résout l'emoji de drapeau pour les principaux codes ISO-639-1.
+LocaleForge is a shared .NET library dedicated to **hierarchical JSON localization (`IStringLocalizer`), dynamic language discovery, and ISO-4217 multi-currency formatting**. It is 100% domain- and database-agnostic.
 
-### 2. `LocaleForge.Currencies` — Devises ISO-4217 & Formatage Monétaire
-- **`CurrencyInfo` (`record`)** :
+---
+
+## 🧱 Components & Detailed Capabilities
+
+### 1. `LocaleForge.Localization` — JSON Localization & Language Discovery
+- **`JsonStringLocalizer` (`IStringLocalizer`) & `JsonStringLocalizerFactory` (`IStringLocalizerFactory`)**:
+  - Thread-safe lazy loading and memory caching (`ConcurrentDictionary<string, Lazy<Dictionary<string, string>>>`) of localized JSON resource files (`{culture}.json`).
+  - Automatic recursive flattening of nested JSON hierarchies (e.g., `{"Common": {"Save": "Save"}}` $\rightarrow$ `Common.Save`).
+  - Hierarchical fallback chain: active culture $\rightarrow$ `fr` $\rightarrow$ `en` $\rightarrow$ raw translation key.
+  - Zero-reflection parsing with full support for JSON scalars (strings, numbers, booleans) and graceful tolerance of missing or malformed files.
+- **`LanguageInfo` (`record`)**:
+  - `string Code`: ISO-639-1 language code (`fr`, `en`, `es`, `de`, etc.).
+  - `string DisplayName`: Native capitalized language label preceded by its flag emoji (`🇫🇷 Français`, `🇬🇧 English`).
+  - `string FlagEmoji`: Associated national flag emoji.
+- **`ILanguageService` & `LanguageService`**:
+  - `GetSupportedLanguages()`: Dynamically discovers `*.json` locale files in the designated resources folder, resolves native culture display names via `CultureInfo` (with graceful fallback on `CultureNotFoundException`), and sorts by priority (`fr`, `en`, then alphabetical).
+  - `IsSupported(string? code)`: Case-insensitive check whether a language is available.
+  - `GetFlagForLanguage(string code)`: Resolves national flag emojis for standard ISO-639-1 codes.
+
+### 2. `LocaleForge.Currencies` — ISO-4217 Currencies & Monetary Formatting
+- **`CurrencyInfo` (`record`)**:
   - `string Code`, `string Symbol`, `string DisplayName`, `string FlagEmoji`.
-- **`ICurrencyService` & `CurrencyService`** :
-  - Charge dynamiquement la liste des devises depuis `IConfiguration["Currencies:Supported"]` avec repli automatique sur `DefaultCurrencies` (15 devises internationales : `EUR`, `USD`, `GBP`, `CHF`, `CAD`, `JPY`, `AUD`, `SEK`, `NOK`, `DKK`, `PLN`, `BRL`, `MAD`, `TND`, `DZD`).
+- **`ICurrencyService` & `CurrencyService`**:
+  - Dynamically loads supported currency lists from `IConfiguration["Currencies:Supported"]` with automatic fallback to `DefaultCurrencies` (15 international currencies: `EUR`, `USD`, `GBP`, `CHF`, `CAD`, `JPY`, `AUD`, `SEK`, `NOK`, `DKK`, `PLN`, `BRL`, `MAD`, `TND`, `DZD`).
   - `GetSupportedCurrencies()`, `GetCurrency(string? code)`, `GetSymbol(string? code)`, `GetStaticSymbol(string? code)`.
-  - `FormatAmount(decimal amount, string? currencyCode, bool includeCents, CultureInfo? culture)` : Formate les montants selon la culture cible et remplace la notation comptable négative entre parenthèses `($100.00)` par le signe moins explicite `-$100.00`.
-- **`CurrencyExtensions`** :
+  - `FormatAmount(decimal amount, string? currencyCode, bool includeCents, CultureInfo? culture)`: Formats amounts according to target culture while replacing accounting parenthetical negative notation `($100.00)` with explicit minus signs `-$100.00`.
+- **`CurrencyExtensions`**:
   - `Configure(ICurrencyService? service)`
-  - `ToCurrency(this decimal amount, ...)` et `ToCurrency(this decimal? amount, ...)`.
+  - `ToCurrency(this decimal amount, ...)` and `ToCurrency(this decimal? amount, ...)`.
 
 ---
 
-## 📋 Protocole de Maintenance par l'Agent IA
+## 📋 Maintenance Protocol for AI Agents
 
-Toute modification de LocaleForge doit respecter :
-1. **Rétrocompatibilité :** Conserver tous les contrats publics existants. Utiliser des surcharges ou des paramètres optionnels.
-2. **Qualité :** Zéro warning (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`), zéro pragma/suppress.
-3. **Tests :** Nommage `MethodeCible_ScenarioOuCondition_ResultatAttendu`.
-4. **Mise à jour :** Compléter immédiatement ce fichier `FRAMEWORK.md` en cas d'ajout d'une nouvelle capacité.
-5. **Validation :** Valider par `./verify.ps1`.
+All enhancements to LocaleForge must comply with:
+1. **Backward Compatibility:** Preserve all existing public contracts. Use overloads or optional parameters.
+2. **Code Cleanliness:** Zero warnings (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`), zero pragmas/suppressions.
+3. **Testing Standards:** Test naming convention `TargetMethod_ScenarioOrCondition_ExpectedResult`.
+4. **Documentation:** Update both `FRAMEWORK.md` and `FRAMEWORK.fr.md` immediately upon introducing or modifying capabilities.
+5. **Validation:** Full pass of `./verify.ps1`.
