@@ -1,5 +1,5 @@
 using System.Globalization;
-using FluentAssertions;
+using AwesomeAssertions;
 using LocaleForge.Currencies;
 using Microsoft.Extensions.Configuration;
 using Xunit;

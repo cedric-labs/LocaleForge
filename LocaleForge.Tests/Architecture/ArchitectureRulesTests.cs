@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using LocaleForge.Localization;
 using NetArchTest.Rules;
 using Xunit;
