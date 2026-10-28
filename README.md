@@ -41,7 +41,7 @@ Lightweight, high-performance hierarchical JSON localization library (`IStringLo
 Add the package via the .NET CLI:
 
 ```bash
-dotnet add package LocaleForge --version 1.0.0
+dotnet add package LocaleForge --version 1.1.0
 ```
 
 ---
