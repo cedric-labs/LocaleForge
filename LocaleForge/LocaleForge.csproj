@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>LocaleForge</PackageId>
-    <Version>1.0.0</Version>
     <Authors>curvecoder</Authors>
     <Company>curvecoder</Company>
     <Description>Lightweight hierarchical JSON localization library and ISO-4217 currency formatter for modern .NET applications.</Description>
