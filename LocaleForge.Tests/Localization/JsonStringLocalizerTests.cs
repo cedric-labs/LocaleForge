@@ -49,7 +49,7 @@ public sealed class JsonStringLocalizerTests : IDisposable
             }
             catch (IOException)
             {
-                // Ignorer le verrou temporaire du système de fichiers lors du nettoyage
+                // A temporary file system lock must not fail the test during cleanup; the folder stays in the temp directory.
             }
         }
     }

@@ -3,36 +3,36 @@ using System.Globalization;
 namespace LocaleForge.Localization;
 
 /// <summary>
-/// Informations décrivant une langue supportée par le système.
+/// Describes a supported language.
 /// </summary>
-/// <param name="Code">Code ISO de la langue (ex: <c>fr</c>, <c>en</c>).</param>
-/// <param name="DisplayName">Nom d'affichage natif précédé du drapeau (ex: <c>🇫🇷 Français</c>).</param>
-/// <param name="FlagEmoji">Emoji du drapeau associé.</param>
+/// <param name="Code">ISO language code (for example <c>fr</c>, <c>en</c>).</param>
+/// <param name="DisplayName">Native display name preceded by the flag (for example <c>🇫🇷 Français</c>).</param>
+/// <param name="FlagEmoji">Matching flag emoji.</param>
 public record LanguageInfo(string Code, string DisplayName, string FlagEmoji);
 
 /// <summary>
-/// Contrat de service pour la gestion et la découverte dynamique des langues supportées.
+/// Discovers and describes the supported languages.
 /// </summary>
 public interface ILanguageService
 {
     /// <summary>
-    /// Retourne la liste ordonnée des langues disponibles dans le système.
+    /// Returns the available languages, in display order.
     /// </summary>
-    /// <returns>Collection en lecture seule des informations de langue.</returns>
+    /// <returns>Read-only collection of the languages.</returns>
     IReadOnlyList<LanguageInfo> GetSupportedLanguages();
 
     /// <summary>
-    /// Vérifie si un code de culture donné est pris en charge.
+    /// Checks whether a culture code is supported.
     /// </summary>
-    /// <param name="code">Code ISO de la langue.</param>
-    /// <returns><c>true</c> si la langue est supportée ; sinon, <c>false</c>.</returns>
+    /// <param name="code">ISO language code.</param>
+    /// <returns><c>true</c> when the language is supported; otherwise <c>false</c>.</returns>
     bool IsSupported(string? code);
 }
 
 /// <summary>
-/// Fournisseur des langues disponibles basé sur la découverte automatique des fichiers JSON de localisation.
+/// Lists the available languages by discovering the JSON localization files.
 /// </summary>
-/// <param name="localesPath">Chemin du répertoire contenant les fichiers <c>*.json</c> de langue.</param>
+/// <param name="localesPath">Folder that holds the <c>*.json</c> language files.</param>
 public class LanguageService(string localesPath) : ILanguageService
 {
     private readonly Lazy<List<LanguageInfo>> _supportedLanguages = new(() => DiscoverLanguages(localesPath));
@@ -85,7 +85,7 @@ public class LanguageService(string localesPath) : ILanguageService
             }
             catch (CultureNotFoundException)
             {
-                // Repli gracieux : si la culture n'est pas reconnue par l'OS hôte, utiliser le code brut
+                // A culture unknown to the host OS keeps its raw code as display name instead of failing the discovery
                 var flag = GetFlagForLanguage(code);
                 result.Add(new LanguageInfo(code, $"{flag} {code.ToUpperInvariant()}".Trim(), flag));
             }
@@ -108,10 +108,10 @@ public class LanguageService(string localesPath) : ILanguageService
     }
 
     /// <summary>
-    /// Résout l'emoji de drapeau correspondant à un code langue ISO.
+    /// Resolves the flag emoji of an ISO language code.
     /// </summary>
-    /// <param name="code">Code langue ISO à 2 lettres.</param>
-    /// <returns>Emoji du drapeau ou globe par défaut.</returns>
+    /// <param name="code">Two-letter ISO language code.</param>
+    /// <returns>The flag emoji, or a globe by default.</returns>
     public static string GetFlagForLanguage(string code)
     {
         ArgumentNullException.ThrowIfNull(code);

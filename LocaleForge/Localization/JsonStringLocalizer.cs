@@ -6,10 +6,10 @@ using Microsoft.Extensions.Localization;
 namespace LocaleForge.Localization;
 
 /// <summary>
-/// Implémentation de <see cref="IStringLocalizer"/> basée sur des fichiers JSON situés dans un répertoire de ressources (<c>{culture}.json</c>).
-/// Supporte l'aplatissement récursif des hiérarchies JSON et le repli multi-langues.
+/// <see cref="IStringLocalizer"/> backed by JSON files in a resources folder (<c>{culture}.json</c>).
+/// Flattens nested JSON objects into dotted keys and falls back across languages.
 /// </summary>
-/// <param name="resourcesPath">Chemin du répertoire contenant les fichiers JSON de localisation.</param>
+/// <param name="resourcesPath">Folder that holds the JSON localization files.</param>
 public class JsonStringLocalizer(string resourcesPath) : IStringLocalizer
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -53,7 +53,7 @@ public class JsonStringLocalizer(string resourcesPath) : IStringLocalizer
             return value;
         }
 
-        // Repli 1 : langue par défaut "fr" si la langue courante n'est pas "fr"
+        // Fallback 1: the default language "fr" when the current language is not "fr"
         if (!string.Equals(culture, "fr", StringComparison.OrdinalIgnoreCase))
         {
             var frDict = LoadDictionary("fr");
@@ -63,7 +63,7 @@ public class JsonStringLocalizer(string resourcesPath) : IStringLocalizer
             }
         }
 
-        // Repli 2 : "en"
+        // Fallback 2: "en"
         if (!string.Equals(culture, "en", StringComparison.OrdinalIgnoreCase))
         {
             var enDict = LoadDictionary("en");
@@ -105,7 +105,7 @@ public class JsonStringLocalizer(string resourcesPath) : IStringLocalizer
             }
             catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
             {
-                // Retourner un dictionnaire vide pour permettre le repli sur la langue par défaut ou le nom de clé
+                // An empty dictionary lets the lookup fall back to the default language or to the key name
                 return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             }
         })).Value;
@@ -137,9 +137,9 @@ public class JsonStringLocalizer(string resourcesPath) : IStringLocalizer
 }
 
 /// <summary>
-/// Fabrique <see cref="IStringLocalizerFactory"/> instanciant et mettant en cache un <see cref="JsonStringLocalizer"/> partagé.
+/// <see cref="IStringLocalizerFactory"/> that creates and caches one shared <see cref="JsonStringLocalizer"/>.
 /// </summary>
-/// <param name="resourcesPath">Chemin du répertoire contenant les fichiers JSON de localisation.</param>
+/// <param name="resourcesPath">Folder that holds the JSON localization files.</param>
 public class JsonStringLocalizerFactory(string resourcesPath) : IStringLocalizerFactory
 {
     private readonly ConcurrentDictionary<string, JsonStringLocalizer> _localizers = new(StringComparer.OrdinalIgnoreCase);

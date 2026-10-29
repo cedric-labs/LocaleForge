@@ -5,53 +5,53 @@ using Microsoft.Extensions.Configuration;
 namespace LocaleForge.Currencies;
 
 /// <summary>
-/// Informations décrivant une devise monétaire prise en charge.
+/// Describes a supported currency.
 /// </summary>
-/// <param name="Code">Code ISO-4217 à 3 lettres (ex: <c>EUR</c>, <c>USD</c>).</param>
-/// <param name="Symbol">Symbole monétaire (ex: <c>€</c>, <c>$</c>).</param>
-/// <param name="DisplayName">Libellé complet d'affichage.</param>
-/// <param name="FlagEmoji">Emoji du drapeau associé.</param>
+/// <param name="Code">Three-letter ISO-4217 code (for example <c>EUR</c>, <c>USD</c>).</param>
+/// <param name="Symbol">Currency symbol (for example <c>€</c>, <c>$</c>).</param>
+/// <param name="DisplayName">Full display name.</param>
+/// <param name="FlagEmoji">Matching flag emoji.</param>
 public record CurrencyInfo(string Code, string Symbol, string DisplayName, string FlagEmoji = "");
 
 /// <summary>
-/// Service de gestion et de résolution dynamique des devises configurables.
+/// Resolves and formats the configured currencies.
 /// </summary>
 public interface ICurrencyService
 {
     /// <summary>
-    /// Retourne la liste des devises supportées.
+    /// Returns the supported currencies.
     /// </summary>
-    /// <returns>Collection en lecture seule des devises configurées.</returns>
+    /// <returns>Read-only collection of the configured currencies.</returns>
     IReadOnlyList<CurrencyInfo> GetSupportedCurrencies();
 
     /// <summary>
-    /// Résout les informations complètes d'une devise à partir de son code ISO.
+    /// Resolves the full description of a currency from its ISO code.
     /// </summary>
-    /// <param name="code">Code ISO à 3 lettres (ex: EUR, USD).</param>
-    /// <returns>Informations de devise correspondante ou devise par défaut.</returns>
+    /// <param name="code">Three-letter ISO code (for example EUR, USD).</param>
+    /// <returns>The matching currency, or the default currency.</returns>
     CurrencyInfo GetCurrency(string? code);
 
     /// <summary>
-    /// Récupère le symbole monétaire associé à un code devise.
+    /// Gets the symbol of a currency code.
     /// </summary>
-    /// <param name="code">Code ISO de la devise.</param>
-    /// <returns>Symbole de devise (ex: €, $).</returns>
+    /// <param name="code">ISO currency code.</param>
+    /// <returns>Currency symbol (for example €, $).</returns>
     string GetSymbol(string? code);
 
     /// <summary>
-    /// Formate un montant décimal avec le symbole et les séparateurs de la devise et culture cibles.
+    /// Formats a decimal amount with the symbol and separators of the target currency and culture.
     /// </summary>
-    /// <param name="amount">Montant à formater.</param>
-    /// <param name="currencyCode">Code de la devise cible.</param>
-    /// <param name="includeCents">Indique s'il faut afficher les centimes.</param>
-    /// <param name="culture">Culture régionale optionnelle pour le formatage.</param>
-    /// <returns>Montant mis en forme sous forme textuelle.</returns>
+    /// <param name="amount">Amount to format.</param>
+    /// <param name="currencyCode">Target currency code.</param>
+    /// <param name="includeCents">Whether the cents are shown.</param>
+    /// <param name="culture">Optional culture used for formatting.</param>
+    /// <returns>The formatted amount.</returns>
     string FormatAmount(decimal amount, string? currencyCode = null, bool includeCents = true, CultureInfo? culture = null);
 }
 
 /// <summary>
-/// Implémentation du service de devises s'appuyant sur <see cref="IConfiguration"/> (<c>Currencies:Supported</c>)
-/// avec un repli transparent sur les principales devises bancaires internationales.
+/// Currency service backed by <see cref="IConfiguration"/> (<c>Currencies:Supported</c>),
+/// falling back to the main international banking currencies.
 /// </summary>
 /// <param name="configuration">Configuration applicative.</param>
 public class CurrencyService(IConfiguration configuration) : ICurrencyService
@@ -60,7 +60,7 @@ public class CurrencyService(IConfiguration configuration) : ICurrencyService
     private readonly Lazy<List<CurrencyInfo>> _cachedCurrencies = new(() => LoadCurrencies(configuration));
 
     /// <summary>
-    /// Liste de référence des 15 devises internationales par défaut.
+    /// Reference list of the 15 default international currencies.
     /// </summary>
     public static readonly IReadOnlyList<CurrencyInfo> DefaultCurrencies =
     [
@@ -108,10 +108,10 @@ public class CurrencyService(IConfiguration configuration) : ICurrencyService
     }
 
     /// <summary>
-    /// Résout de façon statique le symbole monétaire associé à un code ISO parmi les devises par défaut.
+    /// Resolves, among the default currencies, the symbol of an ISO code without a service instance.
     /// </summary>
-    /// <param name="code">Code ISO à 3 lettres.</param>
-    /// <returns>Symbole monétaire ou code normalisé.</returns>
+    /// <param name="code">Three-letter ISO code.</param>
+    /// <returns>The currency symbol, or the normalized code.</returns>
     public static string GetStaticSymbol(string? code)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -125,20 +125,20 @@ public class CurrencyService(IConfiguration configuration) : ICurrencyService
     }
 
     /// <summary>
-    /// Formate un montant décimal avec un symbole monétaire explicite en évitant la notation comptable entre parenthèses.
+    /// Formats a decimal amount with an explicit currency symbol, avoiding the accounting notation in parentheses.
     /// </summary>
-    /// <param name="amount">Montant à formater.</param>
-    /// <param name="symbol">Symbole monétaire.</param>
-    /// <param name="includeCents">Indique s'il faut afficher les centimes.</param>
-    /// <param name="culture">Culture régionale optionnelle.</param>
-    /// <returns>Montant formaté.</returns>
+    /// <param name="amount">Amount to format.</param>
+    /// <param name="symbol">Currency symbol.</param>
+    /// <param name="includeCents">Whether the cents are shown.</param>
+    /// <param name="culture">Optional culture.</param>
+    /// <returns>The formatted amount.</returns>
     public static string FormatWithSymbol(decimal amount, string symbol, bool includeCents = true, CultureInfo? culture = null)
     {
         var activeCulture = culture ?? CultureInfo.CurrentCulture;
         var nfi = (NumberFormatInfo)activeCulture.NumberFormat.Clone();
         nfi.CurrencySymbol = symbol;
 
-        // Évite les parenthèses comptables en anglais pour les montants négatifs : préfère -$100 à ($100)
+        // English cultures show negative amounts in accounting parentheses; -$100 is preferred to ($100)
         if (nfi.CurrencyNegativePattern == 0)
         {
             nfi.CurrencyNegativePattern = 1;
@@ -163,7 +163,7 @@ public class CurrencyService(IConfiguration configuration) : ICurrencyService
         }
         catch (JsonException)
         {
-            // Repli sur la liste de devises par défaut si le JSON de configuration est invalide
+            // An invalid configuration JSON falls back to the default currency list
         }
 
         return [.. DefaultCurrencies];
@@ -171,29 +171,29 @@ public class CurrencyService(IConfiguration configuration) : ICurrencyService
 }
 
 /// <summary>
-/// Méthodes d'extension permettant de formater tout montant monétaire selon la devise cible.
+/// Extension methods that format any amount in a target currency.
 /// </summary>
 public static class CurrencyExtensions
 {
     private static ICurrencyService? s_service;
 
     /// <summary>
-    /// Configure l'instance active de <see cref="ICurrencyService"/> utilisée par les méthodes d'extension <see cref="ToCurrency(decimal, string?, bool, CultureInfo?)"/>.
+    /// Sets the active <see cref="ICurrencyService"/> instance used by the <see cref="ToCurrency(decimal, string?, bool, CultureInfo?)"/> extension methods.
     /// </summary>
-    /// <param name="service">Service de devises actif.</param>
+    /// <param name="service">Active currency service.</param>
     public static void Configure(ICurrencyService? service)
     {
         s_service = service;
     }
 
     /// <summary>
-    /// Formate un montant décimal dans la devise spécifiée.
+    /// Formats a decimal amount in the given currency.
     /// </summary>
-    /// <param name="amount">Montant à formater.</param>
-    /// <param name="currencyCode">Code ISO de la devise.</param>
-    /// <param name="includeCents">Indique s'il faut afficher les centimes.</param>
-    /// <param name="culture">Culture régionale optionnelle.</param>
-    /// <returns>Montant formaté.</returns>
+    /// <param name="amount">Amount to format.</param>
+    /// <param name="currencyCode">ISO currency code.</param>
+    /// <param name="includeCents">Whether the cents are shown.</param>
+    /// <param name="culture">Optional culture.</param>
+    /// <returns>The formatted amount.</returns>
     public static string ToCurrency(this decimal amount, string? currencyCode = null, bool includeCents = true, CultureInfo? culture = null)
     {
         if (s_service is not null)
@@ -206,13 +206,13 @@ public static class CurrencyExtensions
     }
 
     /// <summary>
-    /// Formate un montant décimal nullable dans la devise spécifiée.
+    /// Formats a nullable decimal amount in the given currency.
     /// </summary>
-    /// <param name="amount">Montant nullable à formater.</param>
-    /// <param name="currencyCode">Code ISO de la devise.</param>
-    /// <param name="includeCents">Indique s'il faut afficher les centimes.</param>
-    /// <param name="culture">Culture régionale optionnelle.</param>
-    /// <returns>Montant formaté ou chaîne vide si <c>null</c>.</returns>
+    /// <param name="amount">Nullable amount to format.</param>
+    /// <param name="currencyCode">ISO currency code.</param>
+    /// <param name="includeCents">Whether the cents are shown.</param>
+    /// <param name="culture">Optional culture.</param>
+    /// <returns>The formatted amount, or an empty string when <c>null</c>.</returns>
     public static string ToCurrency(this decimal? amount, string? currencyCode = null, bool includeCents = true, CultureInfo? culture = null)
     {
         if (!amount.HasValue)
